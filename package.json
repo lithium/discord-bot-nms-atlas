@@ -1,0 +1,10 @@
+{
+  "name": "nms-atlas-bot",
+  "version": "1.0.0",
+  "description": "discord bot no mans sky address decoder",
+  "author": "github.com/lithium",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.2.0"
+  }
+}
