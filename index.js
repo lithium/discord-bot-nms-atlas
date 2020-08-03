@@ -6,22 +6,22 @@ const addressRegex = /([0-9A-F]{4}:){3}[0-9A-F]{4}/i;
 
 const directions = [
 {'name': 'North', range:  [0, 11.25]},
-{'name': 'North Beta', range:  [11.25, 33.75]},
+{'name': 'Beta North', range:  [11.25, 33.75]},
 {'name': 'Beta', range:  [33.75, 56.25]},
-{'name': 'East Beta', range:  [56.25, 78.75]},
+{'name': 'Beta East', range:  [56.25, 78.75]},
 {'name': 'East', range:  [78.75, 101.25]},
-{'name': 'East Gamma', range:  [101.25, 123.75]},
-{'name': 'Gamma', range:  [123.75, 146.25]},
-{'name': 'South Gamma', range:  [146.25, 168.75]},
+{'name': 'Delta East', range:  [101.25, 123.75]},
+{'name': 'Delta', range:  [123.75, 146.25]},
+{'name': 'Delta South', range:  [146.25, 168.75]},
 {'name': 'South', range:  [168.75, 191.25]},
-{'name': 'South Delta', range:  [191.25, 213.75]},
-{'name': 'Delta', range:  [213.75, 236.25]},
-{'name': 'West Delta', range:  [236.25, 258.75]},
+{'name': 'Gamma South', range:  [191.25, 213.75]},
+{'name': 'Gamma', range:  [213.75, 236.25]},
+{'name': 'Gamma West', range:  [236.25, 258.75]},
 {'name': 'West', range:  [258.75, 281.25]},
-{'name': 'West Alpha', range:  [281.25, 303.75]},
+{'name': 'Alpha West', range:  [281.25, 303.75]},
 {'name': 'Alpha', range:  [303.75, 326.25]},
-{'name': 'North Alpha', range:  [326.25, 348.75]},
-{'name': 'North', range:  [348.75, 360.0]},
+{'name': 'Alpha North', range:  [326.25, 348.75]},
+{'name': 'North', range:  [348.75, 360.1]},
 ];
 
 function decodeHexAddress(hexAddress) {
@@ -86,6 +86,7 @@ function compassBearing(decoded) {
 	let phideg1 = Math.atan2(decoded.portal.z, decoded.portal.x)*180/Math.PI;
 	let phideg2 = phideg1 < 0 ? 360+phideg1 : phideg1 // clamp to 0..360
 	let phideg = phideg2+90 % 360 // rotate 90 degrees
+	// console.log("phi", phideg1, phideg2, phideg)
 	for (var i=0; i < directions.length; i++) {
 		const dir = directions[i];
 		if (phideg < dir.range[1] && phideg >= dir.range[0]) {
@@ -104,6 +105,7 @@ function planeLocation(decoded) {
 	return ""
 }
 
+
 /*
 	function lookupEmoji(name) {
 		return name;
@@ -113,19 +115,25 @@ function test()
 {
 
 	// const hexAddress = "0D60:0081:0C7E:0120"
-	const hexAddress = "042F:0078:0D56:0000"
+	// const hexAddress = "042F:0078:0D56:0000"
+	const hexAddress = "07FF:007F:03E5:0001"
 	let decoded = decodeHexAddress(hexAddress)
 	let code = portalCode(decoded)
-	let emojis = glyphEmojis(code)
+	let distance = distanceFromCore(decoded).toFixed(3)
+	let bearing = compassBearing(decoded)
+	let plane = planeLocation(decoded)
 
 	console.log(util.inspect(decoded))
 	console.log(`${hexAddress} -- ${code}`)
-	console.log(`${emojis}`)
+	console.log(`distance= ${distance}`)
+	console.log(`bearing= ${bearing}`)
+	console.log(`plane= ${plane}`)
 }
 
 
 test()
 */
+
 
 
 const Discord = require("discord.js");
@@ -164,7 +172,7 @@ client.on("message", function(message) {
 		let plane = planeLocation(decoded)
 
 		let emojis = glyphEmojis(code)
-		message.reply(`${hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}}\n${plane}${bearing} ${distance}kly\n${emojis}`)
+		message.reply(`${hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}, system:${decoded.system}}\n${plane}${bearing} ${distance}kly\n${emojis}`)
 	}
 })
 
