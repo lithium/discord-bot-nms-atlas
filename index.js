@@ -5,42 +5,45 @@ const addressRegex = /([0-9A-F]{4}:){3}[0-9A-F]{4}/i;
 
 
 const directions = [
-{'name': 'N', range:  [348.75, 11.25]},
-{'name': 'NNE', range:  [11.25, 33.75]},
-{'name': 'NE', range:  [33.75, 56.25]},
-{'name': 'ENE', range:  [56.25, 78.75]},
-{'name': 'E', range:  [78.75, 101.25]},
-{'name': 'ESE', range:  [101.25, 123.75]},
-{'name': 'SE', range:  [123.75, 146.25]},
-{'name': 'SSE', range:  [146.25, 168.75]},
-{'name': 'S', range:  [168.75, 191.25]},
-{'name': 'SSW', range:  [191.25, 213.75]},
-{'name': 'SW', range:  [213.75, 236.25]},
-{'name': 'WSW', range:  [236.25, 258.75]},
-{'name': 'W', range:  [258.75, 281.25]},
-{'name': 'WNW', range:  [281.25, 303.75]},
-{'name': 'NW', range:  [303.75, 326.25]},
-{'name': 'NNW', range:  [326.25, 348.75]},
+{'name': 'North', range:  [0, 11.25]},
+{'name': 'North Beta', range:  [11.25, 33.75]},
+{'name': 'Beta', range:  [33.75, 56.25]},
+{'name': 'East Beta', range:  [56.25, 78.75]},
+{'name': 'East', range:  [78.75, 101.25]},
+{'name': 'East Gamma', range:  [101.25, 123.75]},
+{'name': 'Gamma', range:  [123.75, 146.25]},
+{'name': 'South Gamma', range:  [146.25, 168.75]},
+{'name': 'South', range:  [168.75, 191.25]},
+{'name': 'South Delta', range:  [191.25, 213.75]},
+{'name': 'Delta', range:  [213.75, 236.25]},
+{'name': 'West Delta', range:  [236.25, 258.75]},
+{'name': 'West', range:  [258.75, 281.25]},
+{'name': 'West Alpha', range:  [281.25, 303.75]},
+{'name': 'Alpha', range:  [303.75, 326.25]},
+{'name': 'North Alpha', range:  [326.25, 348.75]},
+{'name': 'North', range:  [348.75, 360.0]},
 ];
 
 function decodeHexAddress(hexAddress) {
 	const parts = hexAddress.match(/[0-9A-F]+/ig)
 	let ret = {
-		x: parseInt(parts[0], 16),
-		y: parseInt(parts[1], 16),
-		z: parseInt(parts[2], 16),
+		galactic: {
+			x: parseInt(parts[0], 16),
+			y: parseInt(parts[1], 16),
+			z: parseInt(parts[2], 16),
+		},
 		system: parseInt(parts[3], 16),
 		planet: 0
 	}
-	ret.coords = {
-		x: ret.x - 2047,
-		y: ret.y - 127,
-		z: ret.z - 2047,
+	ret.portal = {
+		x: ret.galactic.x - 2047,
+		y: ret.galactic.y - 127,
+		z: ret.galactic.z - 2047,
 	}
 	ret.voxel = {
-		x: voxelShift(ret.x, 2047, 0xFFF),
-		y: voxelShift(ret.y, 127, 0xFF),
-		z: voxelShift(ret.z, 2047, 0xFFF),
+		x: voxelShift(ret.galactic.x, 2047, 0xFFF),
+		y: voxelShift(ret.galactic.y, 127, 0xFF),
+		z: voxelShift(ret.galactic.z, 2047, 0xFFF),
 	}
 	return ret
 }
@@ -49,9 +52,9 @@ function portalCode(decoded) {
 	var ret = ""
 	ret += Number(decoded.planet).toString(16)
 	ret += Number(decoded.system).toString(16).padStart(3, '0')
-	ret += voxelShift(decoded.y, 127, 0xFF).toString(16).padStart(2, '0')
-	ret += voxelShift(decoded.z, 2047, 0xFFF).toString(16).padStart(3, '0')
-	ret += voxelShift(decoded.x, 2047, 0xFFF).toString(16).padStart(3, '0')
+	ret += decoded.voxel.y.toString(16).padStart(2, '0')
+	ret += decoded.voxel.z.toString(16).padStart(3, '0')
+	ret += decoded.voxel.x.toString(16).padStart(3, '0')
 	return ret.toUpperCase()
 }
 
@@ -76,20 +79,16 @@ function glyphEmojis(code) {
 }
 
 function distanceFromCore(decoded) {
-	return Math.sqrt(Math.pow(decoded.coords.x,2) + Math.pow(decoded.coords.y,2) + Math.pow(decoded.coords.z,2))*400 / 1000
+	return Math.sqrt(Math.pow(decoded.portal.x,2) + Math.pow(decoded.portal.y,2) + Math.pow(decoded.portal.z,2))*400 / 1000
 }
 
 function compassBearing(decoded) {
-	let phideg = Math.atan2(decoded.coords.z, decoded.coords.x)*180/Math.PI;
-	phideg = phideg+90 % 360
-	console.log("phideg", phideg)
+	let phideg1 = Math.atan2(decoded.portal.z, decoded.portal.x)*180/Math.PI;
+	let phideg2 = phideg1 < 0 ? 360+phideg1 : phideg1 // clamp to 0..360
+	let phideg = phideg2+90 % 360 // rotate 90 degrees
 	for (var i=0; i < directions.length; i++) {
 		const dir = directions[i];
-		if (dir.name == 'N' && (phideg >= dir.range[0] || phideg < dir.range[1])) {
-			return dir.name
-		}
-		else
-		if (phideg >= dir.range[0] && phideg < dir.range[1]) {
+		if (phideg < dir.range[1] && phideg >= dir.range[0]) {
 			return dir.name
 		}
 	}
@@ -133,6 +132,15 @@ function lookupEmoji(name) {
 client.on("message", function(message) {
 	if (message.author.bot) return;
 
+	if (message.content.startsWith('!portal')) {
+		let parts = message.content.split(/ /)
+		let code = parts[1]
+		let emojis = glyphEmojis(code)
+		message.reply(`${code}\n${emojis}`)
+		return;
+	}
+
+	// match a galactic address anywhere
 	matches = message.content.match(addressRegex)
 	if (matches) {
 		// message contains a galactic address
@@ -147,7 +155,7 @@ client.on("message", function(message) {
 		let bearing = compassBearing(decoded)
 
 		let emojis = glyphEmojis(code)
-		message.reply(`${hexAddress} {x:${decoded.coords.x}, y:${decoded.coords.y}, z:${decoded.coords.z}}\n${bearing} ${distance}kly\n${emojis}`)
+		message.reply(`${hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}}\n${bearing} ${distance}kly\n${emojis}`)
 	}
 })
 
