@@ -253,7 +253,7 @@ client.on("message", function(message) {
 	if (message.author.bot) return;
 
 	let parts = message.content.split(/\s+/)
-	if (parts[0] == '!portal') {
+	if (parts[0] == '!glyphs') {
 		let code = parts[1]
 		let emojis = glyphEmojis(code)
 		message.reply(`${code}\n${emojis}`)
