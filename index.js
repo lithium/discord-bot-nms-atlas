@@ -94,6 +94,16 @@ function compassBearing(decoded) {
 	}
 }
 
+function planeLocation(decoded) {
+	if (decoded.portal.y > 64) {
+		return "Upper "
+	}
+	else if (decoded.portal.y < -64) {
+		return "Lower "
+	}
+	return ""
+}
+
 /*
 	function lookupEmoji(name) {
 		return name;
@@ -146,16 +156,15 @@ client.on("message", function(message) {
 		// message contains a galactic address
 		let hexAddress = matches[0];
 		let decoded = decodeHexAddress(hexAddress)
-		console.log(util.inspect(decoded))
+		// console.log(util.inspect(decoded))
 
 		let code = portalCode(decoded)
-		console.log(`${hexAddress} -- ${code}`)
-
 		let distance = distanceFromCore(decoded).toFixed(3)
 		let bearing = compassBearing(decoded)
+		let plane = planeLocation(decoded)
 
 		let emojis = glyphEmojis(code)
-		message.reply(`${hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}}\n${bearing} ${distance}kly\n${emojis}`)
+		message.reply(`${hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}}\n${plane}${bearing} ${distance}kly\n${emojis}`)
 	}
 })
 
