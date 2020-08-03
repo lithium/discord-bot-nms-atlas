@@ -190,13 +190,11 @@ function parse_address(message) {
 
 
 function build_reply(decoded) {
-	let code = portalCode(decoded)
 	let distance = distanceFromCore(decoded).toFixed(3)
 	let bearing = compassBearing(decoded)
 	let plane = planeLocation(decoded)
 
-	let emojis = glyphEmojis(code)
-	return `${decoded.hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}, system:${decoded.system} planet:${decoded.planet}}\n${plane}${bearing} ${distance}kly\n${emojis}`;
+	return `${decoded.hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}, system:${decoded.system} planet:${decoded.planet}}\n${plane}${bearing} ${distance}kly`;
 }
 
 
@@ -256,7 +254,7 @@ client.on("message", function(message) {
 	if (parts[0] == '!glyphs') {
 		let code = parts[1]
 		let emojis = glyphEmojis(code)
-		message.reply(`${code}\n${emojis}`)
+		message.channel.send(`${emojis}`)
 		return;
 	}
 	else 
@@ -264,7 +262,10 @@ client.on("message", function(message) {
 		var hunk = parts.slice(1,-1).join(' ').toLowerCase()
 		let decoded = parse_address(message)
 		if (decoded) {
+			let code = portalCode(decoded)
+			let emojis = glyphEmojis(code)
 			message.reply(build_reply(decoded))
+			message.channel.send(emojis)
 		}
 		return;
 	}
@@ -275,7 +276,10 @@ client.on("message", function(message) {
 		// message contains a galactic address
 		let hexAddress = matches[0];
 		let decoded = decodeHexAddress(hexAddress)
+		let code = portalCode(decoded)
+		let emojis = glyphEmojis(code)
 		message.reply(build_reply(decoded))
+		message.channel.send(emojis)
 	}
 })
 
