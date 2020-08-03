@@ -38,7 +38,7 @@ function decodeHexAddress(hexAddress) {
 			z: parseInt(parts[2], 16),
 		},
 		system: parseInt(parts[3], 16),
-		planet: 0
+		planet: 1
 	}
 	ret.portal = {
 		x: ret.galactic.x - 2047,
@@ -135,10 +135,20 @@ function parse_address(message) {
 
 	let remain = msg.split(/\s+/)
 
-	var dist = remain.shift()
+	var dist = remain.shift().toLowerCase()
 	if (dist) {
-		parsed.distance = Number(dist.toLowerCase().replace("kly", ""))*1000 / 400  // convert to region coordinates
+		if (dist === "pole" || dist === "spiral") {
+			parsed.distance = Number(2047)
+		} else {
+			parsed.distance = Number(dist.toLowerCase().replace("kly", ""))*1000 / 400  // convert to region coordinates
+		}
 	}
+
+	if (isNaN(parsed.distance)) {
+		return
+	}
+
+
 
 	var system = remain.shift()
 	if (system) {
@@ -186,7 +196,7 @@ function build_reply(decoded) {
 	let plane = planeLocation(decoded)
 
 	let emojis = glyphEmojis(code)
-	return `${decoded.hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}, system:${decoded.system}}\n${plane}${bearing} ${distance}kly\n${emojis}`;
+	return `${decoded.hexAddress} {x:${decoded.portal.x}, y:${decoded.portal.y}, z:${decoded.portal.z}, system:${decoded.system} planet:${decoded.planet}}\n${plane}${bearing} ${distance}kly\n${emojis}`;
 }
 
 
@@ -215,7 +225,7 @@ function test()
 	console.log(`plane= ${plane}`)
 }
 function test2() {
-	let decoded = parse_address({content: "!address delta east 420kly system=420"})
+	let decoded = parse_address({content: "!address alpha pole system=420"})
 	console.log(util.inspect(decoded))
 	reply = build_reply(decoded)
 	console.log(reply)
@@ -223,7 +233,6 @@ function test2() {
 
 
 test2()
-
 
 */
 
@@ -254,7 +263,9 @@ client.on("message", function(message) {
 	if (parts[0] == '!address') {
 		var hunk = parts.slice(1,-1).join(' ').toLowerCase()
 		let decoded = parse_address(message)
-		message.reply(build_reply(decoded))
+		if (decoded) {
+			message.reply(build_reply(decoded))
+		}
 		return;
 	}
 
