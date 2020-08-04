@@ -113,13 +113,31 @@ function planeLocation(decoded) {
 
 
 function parse_address(message) {
-	let parts = message.content.split(/\s+/)
-	var msg = parts.slice(1).join(' ').toLowerCase()
+	var parts = message.content.split(/\s+/)
+
+	parts = parts.slice(1)
 	var parsed = {
 		direction: undefined,
 		system: 1, 
 		planet: 1,
+		portal: {
+			x: 0,
+			y: 0,
+			z: 0
+		}
 	}
+
+	if (parts[0].toLowerCase() == "upper") {
+		parsed.portal.y = 127
+		parts.shift()
+	}
+	else if (parts[0].toLowerCase() == "lower") {
+		parsed.portal.y = -127
+		parts.shift()
+	}
+
+
+	var msg = parts.join(' ').toLowerCase()
 
 	// parse direction
 	for (var i=0; i < directions.length; i++) {
@@ -162,18 +180,13 @@ function parse_address(message) {
 
 
 	let theta = parsed.direction.bearing * Math.PI/180
-	let x = Math.round(parsed.distance * Math.cos(theta))
-	let z = Math.round(parsed.distance * Math.sin(theta))
-	let y = 0
-	parsed.portal = {
-		x: x, 
-		y: y,
-		z: z
-	}
+	parsed.portal.x = Math.round(parsed.distance * Math.cos(theta))
+	parsed.portal.z = Math.round(parsed.distance * Math.sin(theta))
+
 	parsed.galactic = {
-		x: x + 2047,
-		y: y + 127,
-		z: z + 2047,
+		x: parsed.portal.x + 2047,
+		y: parsed.portal.y + 127,
+		z: parsed.portal.z + 2047,
 	}
 	parsed.voxel = {
 		x: voxelShift(parsed.galactic.x, 2047, 0xFFF),
